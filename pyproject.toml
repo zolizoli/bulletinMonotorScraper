@@ -14,6 +14,7 @@ fastapi = "^0.95.2"
 fastapi-utils = "^0.2.1"
 fastapi-health = "^0.4.0"
 uvicorn = "^0.22.0"
+hun-date-parser = "^0.1.1"
 
 
 [tool.poetry.group.dev.dependencies]

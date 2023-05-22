@@ -487,6 +487,18 @@ files = [
 ]
 
 [[package]]
+name = "hun-date-parser"
+version = "0.1.1"
+description = "A tool for extracting datetime intervals from Hungarian sentences and turning datetime objects into Hungarian text."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "hun-date-parser-0.1.1.tar.gz", hash = "sha256:5a55fb7e7db9b1c07632291965b92b4e96e65a5bef46a9172e80e7bb1cfd7d0a"},
+    {file = "hun_date_parser-0.1.1-py3-none-any.whl", hash = "sha256:ea9391b4d3cb890d5cf8774660933d29938f66d9ee26eda94b8b3567f6402500"},
+]
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -970,4 +982,4 @@ test = ["pytest (>=7.2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "c3d3ee3f1f6b5d94469000f8154270c020b874bb17811dbb282004aa83ad2c33"
+content-hash = "d5d51ed587dc7e24eb3bf22e648df139d14b9e5060afc2694929abc07350fddf"

@@ -6,7 +6,8 @@ import pdfplumber
 import requests
 import spacy
 from bs4 import BeautifulSoup
-from sqlalchemy import (Column, DateTime, Integer, MetaData, String, Table,
+from hun_date_parser import text2datetime
+from sqlalchemy import (Column, Integer, MetaData, String, Table,
                         create_engine, insert)
 from sqlalchemy.sql import text
 
@@ -74,6 +75,7 @@ def get_a_month(month, year):
                 doc_date = re.findall(
                     r"[0-9]{4}\. [a-zA-záéöőúüűÁÉÖŐÜŰ]+ \d{1,2}\.", text
                 )[0]
+                doc_date = text2datetime(doc_date)[0]["start_date"].strftime("%Y/%m/%d")
                 issue = re.findall(r"\d{1,3}\. szám", text)[0]
                 lemmas = []
                 doc = nlp(text)
