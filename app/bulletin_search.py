@@ -16,10 +16,18 @@ def copy_db():
 
     tgt_conn = tgt_engine.connect()
     tgt_metadata.reflect()
-
     tgt_metadata.clear()
     tgt_metadata.reflect()
     src_metadata.reflect()
+
+    try:
+        statement = text(
+            """CREATE VIRTUAL TABLE FULLTEXTS USING FTS5(text, lemmatized, tokenize="unicode61 remove_diacritics 2")"""
+        )
+        tgt_conn.execute(statement)
+    except Exception as e:
+        print(e)
+        pass
 
     for table in src_metadata.sorted_tables:
         table.create(bind=tgt_engine)
@@ -33,11 +41,4 @@ def copy_db():
         for index, row in enumerate(src_table.select().execute()):
             print("table =", table.name, "Inserting row", index)
             stmt.execute(row._asdict())
-    try:
-        statement = text(
-            """CREATE VIRTUAL TABLE FULLTEXTS USING FTS5(text, lemmatized, tokenize="unicode61 remove_diacritics 2")""")
-        tgt_conn.execute(statement)
-    except Exception as e:
-        print(e)
-        pass
     tgt_conn.close()

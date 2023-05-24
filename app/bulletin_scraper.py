@@ -7,8 +7,7 @@ import requests
 import spacy
 from bs4 import BeautifulSoup
 from hun_date_parser import text2datetime
-from sqlalchemy import (Column, Integer, MetaData, String, Table,
-                        create_engine, insert)
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, insert
 from sqlalchemy.sql import text
 
 ########################################################################################################################

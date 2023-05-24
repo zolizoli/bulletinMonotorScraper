@@ -4,8 +4,9 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi_health import health
 from fastapi_utils.tasks import repeat_every
 from pydantic import BaseModel
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, Column, Integer, MetaData, select, String, Table
 from sqlalchemy.sql import text
+
 from app.bulletin_scraper import get_a_month
 from app.bulletin_search import copy_db
 
@@ -15,6 +16,21 @@ btasks = BackgroundTasks()
 engine = create_engine(
     "sqlite:///bulletin_search.db", pool_recycle=10000, echo=False, future=True
 )
+
+# TODO: put Table into a separate file and import it here and bulletin_scraper
+metadata = MetaData(bind=engine)
+bulletins = Table(
+    "bulletins",
+    metadata,
+    Column("bulletin_id", Integer(), primary_key=True),
+    Column("URI", String(300), nullable=False, unique=True),
+    Column("scrape_date", String(50), nullable=False),
+    Column("doc_date", String(50)),
+    Column("issue", String(100)),
+    Column("text", String(1000000000), index=True),
+    Column("lemmatized", String(1000000000), index=True),
+)
+metadata.create_all(engine)
 
 
 class ScrapeDate(BaseModel):
@@ -38,13 +54,18 @@ def search_by_issue_date(scrapeDate: ScrapeDate):
     """Search bulletins by issue date.
     Returns every item issued on the given date"""
     conn = engine.connect()
-    date = "/".join([str(scrapeDate.year), str(scrapeDate.month).zfill(2), str(scrapeDate.day).zfill(2)])
-    s = select([bulletins]).where(bulletins.c.doc_date==date)
+    date = "/".join(
+        [
+            str(scrapeDate.year),
+            str(scrapeDate.month).zfill(2),
+            str(scrapeDate.day).zfill(2),
+        ]
+    )
+    s = select([bulletins]).where(bulletins.c.doc_date == date)
     rp = conn.execute(s)
     records = rp.fetchall()
     conn.close()
-    return {"query": date,
-            "results": list(records)}
+    return {"query": date, "results": list(records)}
 
 
 @app.post("/search_by_scrape_date")
@@ -52,13 +73,18 @@ def search_by_scrape_date(scrapeDate: ScrapeDate):
     """Search bulletins by scrape date.
     Returns every item scraped on the given date."""
     conn = engine.connect()
-    date = "/".join([str(scrapeDate.year), str(scrapeDate.month).zfill(2), str(scrapeDate.day).zfill(2)])
+    date = "/".join(
+        [
+            str(scrapeDate.year),
+            str(scrapeDate.month).zfill(2),
+            str(scrapeDate.day).zfill(2),
+        ]
+    )
     s = select([bulletins]).where(bulletins.c.scrape_date == date)
     rp = conn.execute(s)
     records = rp.fetchall()
     conn.close()
-    return {"query": date,
-            "results": list(records)}
+    return {"query": date, "results": list(records)}
 
 
 @app.post("/search_by_term")
@@ -69,11 +95,10 @@ def search_by_term(query: Query):
     """
     search_string = text(query.query_string)
     conn = engine.connect()
-    conn.execute(search_string)
+    rp = conn.execute(search_string)
     records = rp.fetchall()
     conn.close()
-    return {"query": query.query_string,
-            "results": records}
+    return {"query": query.query_string, "results": records}
 
 
 @app.get("/scrape_now")
