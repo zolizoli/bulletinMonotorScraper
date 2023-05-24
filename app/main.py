@@ -4,17 +4,17 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi_health import health
 from fastapi_utils.tasks import repeat_every
 from pydantic import BaseModel
-from sqlalchemy import (
-    insert,
-    select,
-)
+from sqlalchemy import create_engine, select
 from sqlalchemy.sql import text
+from app.bulletin_scraper import get_a_month
+from app.bulletin_search import copy_db
 
-from app.bulletin_scraper import get_a_month, engine, metadata, bulletins
 
 app = FastAPI()
 btasks = BackgroundTasks()
-metadata.create_all(engine)
+engine = create_engine(
+    "sqlite:///bulletin_search.db", pool_recycle=10000, echo=False, future=True
+)
 
 
 class ScrapeDate(BaseModel):
@@ -24,12 +24,7 @@ class ScrapeDate(BaseModel):
 
 
 class Query(BaseModel):
-    term1: str
-    term2: str
-    term3: str
-    op1: str
-    op2: str
-    queryt: str
+    query_string: str
 
 
 @app.get("/")
@@ -70,9 +65,15 @@ def search_by_scrape_date(scrapeDate: ScrapeDate):
 def search_by_term(query: Query):
     """Search the full text field of the bulletins.
     Use simple matching and Boolean queries.
-    TO BE IMPLEMENTED
+    WARNING: not for production, it can be used for sql injection attack!!!!
     """
-    search_string = text(f"select *, rank from FULLTEXTS where text MATCH {query.term1}")
+    search_string = text(query.query_string)
+    conn = engine.connect()
+    conn.execute(search_string)
+    records = rp.fetchall()
+    conn.close()
+    return {"query": query.query_string,
+            "results": records}
 
 
 @app.get("/scrape_now")
@@ -94,11 +95,14 @@ def scrape_date(scrapeDate: ScrapeDate):
 @app.on_event("startup")
 @repeat_every(seconds=60 * 60 * 24)
 def scheduled_scraper():
-    """Runs bulletin_scraper.get_a_month() once a day"""
+    """Runs bulletin_scraper.get_a_month() once a day
+    Copies the bulletin.db into bulletin_search.db
+    """
     print("Hello-bello" * 30)
     month = datetime.now().month
     year = datetime.now().year
     get_a_month(month, year)
+    copy_db()
     return None
 
 

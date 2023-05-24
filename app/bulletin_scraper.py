@@ -33,9 +33,6 @@ bulletins = Table(
 )
 
 metadata.create_all(engine)
-##### FULL TEXT SEARCH VIA VIRTUAL TABLE
-statement = text("""CREATE VIRTUAL TABLE FULLTEXTS USING FTS5(text, lemmatized, tokenize="unicode61 remove_diacritics 2")""")
-connection.execute(statement)
 connection.close()
 
 ##### NLP
@@ -99,6 +96,10 @@ def get_a_month(month, year):
                     conn.close()
                 except Exception as e:
                     print("\tINSERTION ERROR", e)
+                    try:
+                        conn.close()  # ugly but we have to release the connection
+                    except Exception as e:
+                        pass
                     continue
         except Exception as e:
             print("REQUEST ERROR", e)
